@@ -1,5 +1,6 @@
-import sqlite3
 import copy
+import psycopg2
+import streamlit as st
 from datetime import datetime
 
 DB_NAME = "biliardino.db"
@@ -9,7 +10,7 @@ DB_NAME = "biliardino.db"
 # CONNESSIONE
 # =========================
 def connect_db():
-    return sqlite3.connect(DB_NAME)
+    return psycopg2.connect(st.secrets["db_url"])
 
 
 # =========================
@@ -22,7 +23,7 @@ def create_tables():
     # PLAYERS
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS players (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         nome TEXT NOT NULL,
         cognome TEXT NOT NULL,
         soprannome TEXT UNIQUE NOT NULL,
@@ -34,13 +35,13 @@ def create_tables():
     # Add descrizione column if it doesn't exist (migration for existing databases)
     try:
         cursor.execute("ALTER TABLE players ADD COLUMN descrizione TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
+    except Exception:
+        pass
 
     # TOURNAMENTS
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tournaments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         nome TEXT DEFAULT '',
         data TEXT,
         n_giocatori INTEGER
@@ -50,13 +51,13 @@ def create_tables():
     # Add nome column if it doesn't exist (migration for existing databases)
     try:
         cursor.execute("ALTER TABLE tournaments ADD COLUMN nome TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
+    except Exception:
+        pass
 
     # MATCHES
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS matches (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         tournament_id INTEGER,
         player1 TEXT,
         player2 TEXT,
@@ -70,7 +71,7 @@ def create_tables():
     # STATS
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS player_stats (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         tournament_id INTEGER,
         soprannome TEXT,
         punti INTEGER,
@@ -99,10 +100,10 @@ def add_player(nome, cognome, soprannome, data_nascita, descrizione=""):
     try:
         cur.execute("""
         INSERT INTO players (nome, cognome, soprannome, data_nascita, descrizione)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
         """, (nome, cognome, soprannome, data_nascita, descrizione))
         conn.commit()
-    except sqlite3.IntegrityError:
+    except Exception:
         print("❌ Soprannome già esistente")
 
     conn.close()
@@ -126,7 +127,7 @@ def get_player_info(soprannome):
     cur.execute("""
     SELECT nome, cognome, soprannome, data_nascita, descrizione
     FROM players
-    WHERE soprannome=?
+    WHERE soprannome=%s
     """, (soprannome,))
 
     res = cur.fetchone()
@@ -138,7 +139,7 @@ def delete_player(soprannome):
     conn = connect_db()
     cur = conn.cursor()
 
-    cur.execute("DELETE FROM players WHERE soprannome=?", (soprannome,))
+    cur.execute("DELETE FROM players WHERE soprannome=%s", (soprannome,))
     conn.commit()
     conn.close()
 
@@ -149,8 +150,8 @@ def update_player(old_nick, nome, cognome, new_nick, data_nascita, descrizione="
 
     cur.execute("""
     UPDATE players
-    SET nome=?, cognome=?, soprannome=?, data_nascita=?, descrizione=?
-    WHERE soprannome=?
+    SET nome=%s, cognome=%s, soprannome=%s, data_nascita=%s, descrizione=%s
+    WHERE soprannome=%s
     """, (nome, cognome, new_nick, data_nascita, descrizione, old_nick))
 
     conn.commit()
@@ -167,12 +168,14 @@ def save_tournament(players, schedule, results, standings, nome=""):
 
     data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+
     cur.execute("""
     INSERT INTO tournaments (nome, data, n_giocatori)
-    VALUES (?, ?, ?)
+    VALUES (%s, %s, %s)
+    RETURNING id
     """, (nome, data, len(players)))
 
-    tournament_id = cur.lastrowid
+    tournament_id = cur.fetchone()[0]
 
     # MATCHES
     for i, match in enumerate(schedule):
@@ -184,7 +187,7 @@ def save_tournament(players, schedule, results, standings, nome=""):
             tournament_id,
             player1, player2, player3, player4,
             score1, score2
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
             tournament_id,
             t1[0], t1[1], t2[0], t2[1],
@@ -199,7 +202,7 @@ def save_tournament(players, schedule, results, standings, nome=""):
             punti, partite, vittorie, pareggi, sconfitte,
             gf, gs, cf, cs
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             tournament_id, p,
             s["pt"], s["p"], s["v"], s["n"], s["s"],
@@ -217,9 +220,9 @@ def delete_tournament(tournament_id):
     conn = connect_db()
     cur = conn.cursor()
 
-    cur.execute("DELETE FROM matches WHERE tournament_id=?", (tournament_id,))
-    cur.execute("DELETE FROM player_stats WHERE tournament_id=?", (tournament_id,))
-    cur.execute("DELETE FROM tournaments WHERE id=?", (tournament_id,))
+    cur.execute("DELETE FROM matches WHERE tournament_id=%s", (tournament_id,))
+    cur.execute("DELETE FROM player_stats WHERE tournament_id=%s", (tournament_id,))
+    cur.execute("DELETE FROM tournaments WHERE id=%s", (tournament_id,))
 
     conn.commit()
     conn.close()
@@ -247,7 +250,7 @@ def get_tournament_stats(tournament_id):
     SELECT soprannome, punti, partite, vittorie, pareggi, sconfitte,
            gf, gs, cf, cs
     FROM player_stats
-    WHERE tournament_id=?
+    WHERE tournament_id=%s
     ORDER BY punti DESC
     """, (tournament_id,))
 
@@ -276,7 +279,7 @@ def get_player_overall_stats(soprannome):
         AVG(partite) as partite_medie,
         AVG(vittorie) as vittorie_medie
     FROM player_stats
-    WHERE soprannome=?
+    WHERE soprannome=%s
     """, (soprannome,))
 
     res = cur.fetchone()
@@ -292,7 +295,7 @@ def get_player_stats(soprannome):
     SELECT tournament_id, punti, partite, vittorie, pareggi, sconfitte,
            gf, gs, cf, cs
     FROM player_stats
-    WHERE soprannome=?
+    WHERE soprannome=%s
     ORDER BY tournament_id
     """, (soprannome,))
 
@@ -309,7 +312,7 @@ def get_tournament_matches(tournament_id):
     cur.execute("""
     SELECT player1, player2, player3, player4, score1, score2
     FROM matches
-    WHERE tournament_id=?
+    WHERE tournament_id=%s
     ORDER BY id
     """, (tournament_id,))
 
@@ -411,7 +414,7 @@ def get_player_ranking_stats(soprannome):
     cur.execute("""
     SELECT ps.tournament_id, ps.punti
     FROM player_stats ps
-    WHERE ps.soprannome = ?
+    WHERE ps.soprannome = %s
     """, (soprannome,))
 
     player_tournaments = cur.fetchall()
@@ -425,7 +428,7 @@ def get_player_ranking_stats(soprannome):
         cur.execute("""
         SELECT soprannome, punti
         FROM player_stats
-        WHERE tournament_id = ?
+        WHERE tournament_id = %s
         ORDER BY punti DESC
         """, (tournament_id,))
 
