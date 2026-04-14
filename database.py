@@ -16,6 +16,7 @@ def connect_db():
 # =========================
 def create_tables():
     conn = connect_db()
+    conn.autocommit = True
     cursor = conn.cursor()
 
     # PLAYERS
@@ -30,20 +31,6 @@ def create_tables():
     )
     """)
 
-    # Add descrizione column if it doesn't exist (migration for existing databases)
-    cursor.execute("""
-    DO $$
-    BEGIN
-        IF NOT EXISTS (
-            SELECT 1 
-            FROM information_schema.columns 
-            WHERE table_name='players' AND column_name='descrizione'
-        ) THEN
-            ALTER TABLE players ADD COLUMN descrizione TEXT DEFAULT '';
-        END IF;
-    END $$;
-    """)
-
     # TOURNAMENTS
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tournaments (
@@ -54,11 +41,6 @@ def create_tables():
     )
     """)
 
-    # Add nome column if it doesn't exist (migration for existing databases)
-    try:
-        cursor.execute("ALTER TABLE tournaments ADD COLUMN nome TEXT DEFAULT ''")
-    except Exception:
-        pass
 
     # MATCHES
     cursor.execute("""
