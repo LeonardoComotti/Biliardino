@@ -10,7 +10,39 @@ from datetime import datetime
 def connect_db():
     return psycopg2.connect(st.secrets["db_url"])
 
+def get_all_players_full_stats():
+    conn = connect_db()
+    cur = conn.cursor()
 
+    cur.execute("""
+    SELECT 
+        p.nome,
+        p.cognome,
+        p.soprannome,
+        p.data_nascita,
+
+        COALESCE(COUNT(ps.id), 0) as tornei,
+        COALESCE(SUM(ps.vittorie), 0),
+        COALESCE(SUM(ps.pareggi), 0),
+        COALESCE(SUM(ps.sconfitte), 0)
+
+    FROM players p
+    LEFT JOIN player_stats ps 
+        ON p.soprannome = ps.soprannome
+
+    GROUP BY p.nome, p.cognome, p.soprannome, p.data_nascita
+    ORDER BY p.soprannome
+    """)
+
+    res = cur.fetchall()
+    conn.close()
+
+    return res
+    
+@st.cache_data
+def cached_all_players_full():
+    return get_all_players_full_stats()
+    
 # =========================
 # INIT TABELLE
 # =========================
