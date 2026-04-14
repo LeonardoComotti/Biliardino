@@ -31,7 +31,7 @@ def create_tables():
     """)
 
     # Add descrizione column if it doesn't exist (migration for existing databases)
-   cursor.execute("""
+    cursor.execute("""
     DO $$
     BEGIN
         IF NOT EXISTS (
