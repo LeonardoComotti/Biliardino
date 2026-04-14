@@ -245,7 +245,7 @@ def get_tournament_stats(tournament_id):
     conn.close()
     return res
 
-
+@st.cache_data(ttl=300)
 def get_player_overall_stats(soprannome):
     conn = connect_db()
     cur = conn.cursor()
@@ -253,18 +253,18 @@ def get_player_overall_stats(soprannome):
     cur.execute("""
     SELECT 
         COUNT(*) as tornei_giocati,
-        SUM(punti) as punti_totali,
-        SUM(partite) as partite_totali,
-        SUM(vittorie) as vittorie_totali,
-        SUM(pareggi) as pareggi_totali,
-        SUM(sconfitte) as sconfitte_totali,
-        SUM(gf) as gf_totali,
-        SUM(gs) as gs_totali,
-        SUM(cf) as cf_totali,
-        SUM(cs) as cs_totali,
-        AVG(punti) as punti_medi,
-        AVG(partite) as partite_medie,
-        AVG(vittorie) as vittorie_medie
+        SUM(punti),
+        SUM(partite),
+        SUM(vittorie),
+        SUM(pareggi),
+        SUM(sconfitte),
+        SUM(gf),
+        SUM(gs),
+        SUM(cf),
+        SUM(cs),
+        AVG(punti),
+        AVG(partite),
+        AVG(vittorie)
     FROM player_stats
     WHERE soprannome=%s
     """, (soprannome,))
@@ -390,8 +390,33 @@ def get_tournament_progressive_standings(tournament_id):
         progressive_standings[match_idx + 1] = copy.deepcopy(current_standings)
 
     return progressive_standings
+    
+def get_all_players_stats():
+    conn = connect_db()
+    cur = conn.cursor()
 
+    cur.execute("""
+    SELECT 
+        soprannome,
+        COUNT(*) as tornei,
+        SUM(punti),
+        SUM(partite),
+        SUM(vittorie),
+        SUM(pareggi),
+        SUM(sconfitte),
+        SUM(gf),
+        SUM(gs),
+        SUM(cf),
+        SUM(cs)
+    FROM player_stats
+    GROUP BY soprannome
+    """)
 
+    res = cur.fetchall()
+    conn.close()
+    return res
+
+@st.cache_data(ttl=300)
 def get_player_ranking_stats(soprannome):
     """Returns count of 1st, 2nd, 3rd place finishes for a player"""
     conn = connect_db()
