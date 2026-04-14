@@ -24,6 +24,26 @@ st.set_page_config(page_title="Biliardino", layout="wide")
 
 st.title("⚽ Biliardino Manager")
 
+@st.cache_data
+def cached_players():
+    return get_players()
+
+@st.cache_data
+def cached_player_info(p):
+    return get_player_info(p)
+
+@st.cache_data
+def cached_overall(p):
+    return get_player_overall_stats(p)
+
+@st.cache_data
+def cached_ranking(p):
+    return get_player_ranking_stats(p)
+
+@st.cache_data
+def cached_player_stats(p):
+    return get_player_stats(p)
+    
 # =========================
 # SIDEBAR NAVIGATION
 # =========================
@@ -66,7 +86,7 @@ if page == "🏆 Torneo":
         st.subheader("1️⃣ Selezione giocatori")
 
         # Get all available players from database
-        all_players = get_players()
+        all_players = cached_players()
 
         if not all_players:
             st.error("❌ Nessun giocatore nel database. Aggiungi giocatori prima di iniziare.")
@@ -303,6 +323,7 @@ if page == "👥 Gestisci Giocatori":
             if nome and cognome and soprannome:
                 try:
                     add_player(nome, cognome, soprannome, str(data_nascita), descrizione)
+                    st.cache_data.clear()
                     st.success(f"✅ Giocatore '{soprannome}' aggiunto con successo!")
                 except Exception as e:
                     st.error(f"❌ Errore: {e}")
@@ -312,7 +333,7 @@ if page == "👥 Gestisci Giocatori":
     # TAB 2 - VIEW PLAYERS
     with tab2:
         st.markdown("### Elenco giocatori")
-        all_players = get_players()
+        all_players = cached_players()
         
         if all_players:
             # Player selector for detailed view
@@ -328,15 +349,15 @@ if page == "👥 Gestisci Giocatori":
             # Main players table
             players_info = []
             for p in all_players:
-                info = get_player_info(p)
+                info = cached_player_info(p)
 
                 if not info:
                     continue
 
                 nome, cognome, soprannome, data_nascita, descrizione = info
 
-                overall = get_player_overall_stats(p)
-                ranking = get_player_ranking_stats(p)
+                overall = cached_overall(p)
+                ranking = cached_ranking(p)
 
                 if overall and overall[0] > 0:
                     tornei, punti_tot, partite_tot, vittorie_tot, pareggi_tot, sconfitte_tot, gf_tot, gs_tot, cf_tot, cs_tot, _, _, _ = overall
@@ -388,10 +409,10 @@ if page == "👥 Gestisci Giocatori":
                 st.markdown("---")
                 st.markdown(f"### 📊 Statistiche Dettagliate: **{selected_player}**")
                 
-                player_info = get_player_info(selected_player)
-                overall_stats = get_player_overall_stats(selected_player)
-                player_tournament_stats = get_player_stats(selected_player)
-                ranking_stats = get_player_ranking_stats(selected_player)
+                player_info = cached_player_info(selected_player)
+                overall_stats = cached_overall(selected_player)
+                player_tournament_stats = cached_player_stats(selected_player)
+                ranking_stats = cached_ranking(selected_player)
                 
                 if player_info:
                     nome, cognome, _, data_nascita, descrizione = player_info
@@ -624,7 +645,7 @@ if page == "👥 Gestisci Giocatori":
     # TAB 3 - EDIT PLAYER
     with tab3:
         st.markdown("### Modifica giocatore")
-        all_players = get_players()
+        all_players = cached_players()
         
         if all_players:
             selected_player = st.selectbox("Seleziona giocatore", all_players, key="edit_select", on_change=load_player_data)
@@ -656,6 +677,7 @@ if page == "👥 Gestisci Giocatori":
                     if st.button("✅ Salva modifiche", type="primary", width='stretch'):
                         try:
                             update_player(st.session_state.original_soprannome, new_nome, new_cognome, new_soprannome, str(new_data), new_descrizione)
+                            st.cache_data.clear()
                             st.success(f"✅ Giocatore aggiornato con successo!")
                             st.rerun()
                         except Exception as e:
@@ -666,7 +688,7 @@ if page == "👥 Gestisci Giocatori":
     # TAB 4 - DELETE PLAYER
     with tab4:
         st.markdown("### Elimina giocatore")
-        all_players = get_players()
+        all_players = cached_players()
         
         if all_players:
             selected_player = st.selectbox("Seleziona giocatore", all_players, key="delete_select")
@@ -679,6 +701,7 @@ if page == "👥 Gestisci Giocatori":
                 if st.button("❌ Elimina permanentemente", type="secondary", width='stretch'):
                     try:
                         delete_player(soprannome)
+                        st.cache_data.clear()
                         st.success(f"✅ Giocatore eliminato con successo!")
                         st.rerun()
                     except Exception as e:
@@ -832,7 +855,7 @@ if page == "📊 Storico Tornei":
     with tab2:
         st.markdown("### 📈 Statistiche Globali Giocatori")
         
-        all_players = get_players()
+        all_players = cached_players()
         
         if all_players:
             global_stats = []
