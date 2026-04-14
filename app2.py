@@ -329,43 +329,37 @@ if page == "👥 Gestisci Giocatori":
             players_info = []
             for p in all_players:
                 info = get_player_info(p)
+
+                if not info:
+                    continue
+
+                nome, cognome, soprannome, data_nascita, descrizione = info
+
                 overall = get_player_overall_stats(p)
                 ranking = get_player_ranking_stats(p)
-                
-                if info:
-                    nome, cognome, soprannome, data_nascita, descrizione = info
-                    
-                    # Get overall stats if available
-                    if overall and overall[0] > 0:
-                        tornei, punti_tot, partite_tot, vittorie_tot, pareggi_tot, sconfitte_tot, gf_tot, gs_tot, cf_tot, cs_tot, _, _, _ = overall
-                        first_place, second_place, third_place = ranking
-                        players_info.append({
-                            "Nome": nome,
-                            "Cognome": cognome,
-                            "Soprannome": soprannome,
-                            "Data nascita": data_nascita or "N/A",
-                            "🥇 1°": first_place,
-                            "🥈 2°": second_place,
-                            "🥉 3°": third_place,
-                            "✅ Vittorie": vittorie_tot,
-                            "🤝 Pareggi": pareggi_tot,
-                            "❌ Sconfitte": sconfitte_tot,
-                            "🎯 Tornei": tornei
-                        })
-                    else:
-                        players_info.append({
-                            "Nome": nome,
-                            "Cognome": cognome,
-                            "Soprannome": soprannome,
-                            "Data nascita": data_nascita or "N/A",
-                            "✅ Vittorie": 0,
-                            "🤝 Pareggi": 0,
-                            "❌ Sconfitte": 0,
-                            "🎯 Tornei": 0,
-                            "🥇 1°": 0,
-                            "🥈 2°": 0,
-                            "🥉 3°": 0
-                        })
+
+                if overall and overall[0] > 0:
+                    tornei, punti_tot, partite_tot, vittorie_tot, pareggi_tot, sconfitte_tot, gf_tot, gs_tot, cf_tot, cs_tot, _, _, _ = overall
+                    first_place, second_place, third_place = ranking
+                else:
+                    tornei = punti_tot = partite_tot = 0
+                    vittorie_tot = pareggi_tot = sconfitte_tot = 0
+                    gf_tot = gs_tot = cf_tot = cs_tot = 0
+                    first_place = second_place = third_place = 0
+
+                players_info.append({
+                    "Nome": nome,
+                    "Cognome": cognome,
+                    "Soprannome": soprannome,
+                    "Data nascita": data_nascita or "N/A",
+                    "🥇 1°": first_place,
+                    "🥈 2°": second_place,
+                    "🥉 3°": third_place,
+                    "✅ Vittorie": vittorie_tot,
+                    "🤝 Pareggi": pareggi_tot,
+                    "❌ Sconfitte": sconfitte_tot,
+                    "🎯 Tornei": tornei
+                })
             
             if selected_player == "":
                 st.dataframe(
