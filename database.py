@@ -10,7 +10,7 @@ DB_NAME = "biliardino.db"
 # CONNESSIONE
 # =========================
 def connect_db():
-    return psycopg2.connect(st.secrets["postgresql://postgres:[LeoBiliardo2001!]@db.meacqtlbmyfqxfxqzmyt.supabase.co:5432/postgres"])
+    return psycopg2.connect(st.secrets["db_url"])
 
 
 # =========================
