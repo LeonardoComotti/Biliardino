@@ -12,7 +12,7 @@ from database import (
     create_tables, save_tournament, get_players, 
     add_player, get_player_info, delete_player, update_player,
     list_tournaments, get_tournament_stats, get_player_overall_stats, get_player_stats,
-    get_player_ranking_stats, get_tournament_progressive_standings, delete_tournament
+    get_player_ranking_stats, get_tournament_progressive_standings, delete_tournament, cached_all_players_full
 )
 
 # ======================
