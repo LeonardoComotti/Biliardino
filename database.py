@@ -35,8 +35,8 @@ def create_tables():
     # Add descrizione column if it doesn't exist (migration for existing databases)
     try:
         cursor.execute("ALTER TABLE players ADD COLUMN descrizione TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
+    except Exception:
+        pass
 
     # TOURNAMENTS
     cursor.execute("""
@@ -51,8 +51,8 @@ def create_tables():
     # Add nome column if it doesn't exist (migration for existing databases)
     try:
         cursor.execute("ALTER TABLE tournaments ADD COLUMN nome TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
+    except Exception:
+        pass
 
     # MATCHES
     cursor.execute("""
@@ -103,7 +103,7 @@ def add_player(nome, cognome, soprannome, data_nascita, descrizione=""):
         VALUES (%s, %s, %s, %s, %s)
         """, (nome, cognome, soprannome, data_nascita, descrizione))
         conn.commit()
-    except sqlite3.IntegrityError:
+    except Exception:
         print("❌ Soprannome già esistente")
 
     conn.close()
