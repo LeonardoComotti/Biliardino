@@ -31,10 +31,18 @@ def create_tables():
     """)
 
     # Add descrizione column if it doesn't exist (migration for existing databases)
-    try:
-        cursor.execute("ALTER TABLE players ADD COLUMN descrizione TEXT DEFAULT ''")
-    except Exception:
-        pass
+   cursor.execute("""
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM information_schema.columns 
+            WHERE table_name='players' AND column_name='descrizione'
+        ) THEN
+            ALTER TABLE players ADD COLUMN descrizione TEXT DEFAULT '';
+        END IF;
+    END $$;
+    """)
 
     # TOURNAMENTS
     cursor.execute("""
