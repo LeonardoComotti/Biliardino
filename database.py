@@ -3,8 +3,6 @@ import psycopg2
 import streamlit as st
 from datetime import datetime
 
-DB_NAME = "biliardino.db"
-
 
 # =========================
 # CONNESSIONE
@@ -171,9 +169,10 @@ def save_tournament(players, schedule, results, standings, nome=""):
     cur.execute("""
     INSERT INTO tournaments (nome, data, n_giocatori)
     VALUES (%s, %s, %s)
+    RETURNING id
     """, (nome, data, len(players)))
 
-    tournament_id = cur.lastrowid
+    tournament_id = cur.fetchone()[0]
 
     # MATCHES
     for i, match in enumerate(schedule):
@@ -448,74 +447,8 @@ def get_player_ranking_stats(soprannome):
 
 
 # =========================================================
-# CLI MENU (COME VOLEVI TU)
-# =========================================================
-def menu():
-    while True:
-        print("""
-=== DATABASE BILIARDINO ===
-1. Aggiungi giocatore
-2. Lista giocatori
-3. Info giocatore
-4. Modifica giocatore
-5. Elimina giocatore
-6. Lista tornei
-7. Stats torneo
-8. Stats giocatore
-9. Elimina torneo
-0. Esci
-""")
-
-        choice = input("Scelta: ")
-
-        if choice == "1":
-            add_player(
-                input("Nome: "),
-                input("Cognome: "),
-                input("Soprannome: "),
-                input("Data nascita: ")
-            )
-
-        elif choice == "2":
-            print(get_players())
-
-        elif choice == "3":
-            print(get_player_info(input("Soprannome: ")))
-
-        elif choice == "4":
-            old = input("Vecchio soprannome: ")
-            new = input("Nuovo soprannome: ")
-            nome = input("Nome: ")
-            cognome = input("Cognome: ")
-            data = input("Data nascita: ")
-            update_player(old, nome, cognome, new, data)
-
-        elif choice == "5":
-            delete_player(input("Soprannome: "))
-
-        elif choice == "6":
-            print(list_tournaments())
-
-        elif choice == "7":
-            tid = int(input("ID torneo: "))
-            print(get_tournament_stats(tid))
-
-        elif choice == "8":
-            print(get_player_stats(input("Soprannome: ")))
-
-        elif choice == "9":
-            delete_tournament(int(input("ID torneo: ")))
-
-        elif choice == "0":
-            break
-
-        else:
-            print("❌ Scelta non valida")
-
-
-# =========================================================
 # MAIN
 # =========================================================
 if __name__ == "__main__":
     create_tables()
-    menu()
+    
