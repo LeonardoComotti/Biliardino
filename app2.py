@@ -348,25 +348,15 @@ if page == "👥 Gestisci Giocatori":
             
             # Main players table
             players_info = []
-            for p in all_players:
-                info = cached_player_info(p)
+            players_data = cached_all_players_full()
 
-                if not info:
-                    continue
+            players_info = []
 
-                nome, cognome, soprannome, data_nascita, descrizione = info
+            for row in players_data:
+                nome, cognome, soprannome, data_nascita, tornei, v, n, s = row
 
-                overall = cached_overall(p)
-                ranking = cached_ranking(p)
-
-                if overall and overall[0] > 0:
-                    tornei, punti_tot, partite_tot, vittorie_tot, pareggi_tot, sconfitte_tot, gf_tot, gs_tot, cf_tot, cs_tot, _, _, _ = overall
-                    first_place, second_place, third_place = ranking
-                else:
-                    tornei = punti_tot = partite_tot = 0
-                    vittorie_tot = pareggi_tot = sconfitte_tot = 0
-                    gf_tot = gs_tot = cf_tot = cs_tot = 0
-                    first_place = second_place = third_place = 0
+                # ranking (manteniamo quello che avevi)
+                first_place, second_place, third_place = cached_ranking(soprannome)
 
                 players_info.append({
                     "Nome": nome,
@@ -376,9 +366,9 @@ if page == "👥 Gestisci Giocatori":
                     "🥇 1°": first_place,
                     "🥈 2°": second_place,
                     "🥉 3°": third_place,
-                    "✅ Vittorie": vittorie_tot,
-                    "🤝 Pareggi": pareggi_tot,
-                    "❌ Sconfitte": sconfitte_tot,
+                    "✅ Vittorie": v,
+                    "🤝 Pareggi": n,
+                    "❌ Sconfitte": s,
                     "🎯 Tornei": tornei
                 })
             
