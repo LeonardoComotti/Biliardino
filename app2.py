@@ -84,30 +84,15 @@ if saved:
     st.session_state.players = saved["players"]
     st.session_state.schedule = saved["schedule"]
     st.session_state.step = saved["step"]
+    st.session_state.tournament_id = saved.get("tournament_id", None)
 
-    # 🔥 LOAD REAL RESULTS FROM DB
-    tournament_id = saved.get("tournament_id")
+    if st.session_state.tournament_id:
+        matches_db = get_tournament_matches(st.session_state.tournament_id)
 
-    if tournament_id:
-        matches_db = get_tournament_matches(tournament_id)
-    else:
-        matches_db = []
-
-saved = load_active_tournament()
-
-if saved:
-    st.session_state.players = saved["players"]
-    st.session_state.schedule = saved["schedule"]
-    st.session_state.step = saved["step"]
-    st.session_state.tournament_id = saved["tournament_id"]
-
-    # SEMPRE dal DB (single source of truth)
-    matches_db = get_tournament_matches(saved["tournament_id"])
-
-    st.session_state.match_results = [
-        (m[4], m[5]) if m[4] is not None and m[5] is not None else None
-        for m in matches_db
-    ]
+        st.session_state.match_results = [
+            (m[4], m[5]) if m[4] is not None and m[5] is not None else None
+            for m in matches_db
+        ]
 
 # =========================
 # PAGE: TORNEO
