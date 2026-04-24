@@ -186,26 +186,26 @@ if page == "🏆 Torneo":
 
                 current_result = st.session_state.match_results[i]
 
-            default_s1 = current_result[0] if current_result else 0
-            default_s2 = current_result[1] if current_result else 0
+                default_s1 = current_result[0] if current_result else 0
+                default_s2 = current_result[1] if current_result else 0
 
-            s1 = c1.number_input(
-                "Gol",
-                min_value=0,
-                max_value=5,
-                value=default_s1,
-                key=f"s1_{i}",
-                label_visibility="collapsed"
-            )
+                s1 = c1.number_input(
+                    "Gol",
+                    min_value=0,
+                    max_value=5,
+                    value=default_s1,
+                    key=f"s1_{i}",
+                    label_visibility="collapsed"
+                )
 
-            s2 = c2.number_input(
-                "Gol",
-                min_value=0,
-                max_value=5,
-                value=default_s2,
-                key=f"s2_{i}",
-                label_visibility="collapsed"
-            )
+                s2 = c2.number_input(
+                    "Gol",
+                    min_value=0,
+                    max_value=5,
+                    value=default_s2,
+                    key=f"s2_{i}",
+                    label_visibility="collapsed"
+                )
 
                 is_valid = valid_score(s1, s2)
                 
