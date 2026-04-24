@@ -147,7 +147,6 @@ if page == "🏆 Torneo":
                 st.session_state.step = 2
                 st.session_state.match_results = [None] * len(st.session_state.schedule)
                 save_active_tournament({
-                    "tournament_id": tid,
                     "players": st.session_state.players,
                     "schedule": st.session_state.schedule,
                     "results": [],
