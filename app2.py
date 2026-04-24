@@ -79,6 +79,7 @@ if "match_results" not in st.session_state:
 
 # Recupera torneo attivo dopo refresh
 saved = load_active_tournament()
+st.session_state.results = saved.get("results", [])
 
 if saved:
     st.session_state.players = saved["players"]
@@ -89,10 +90,17 @@ if saved:
     if st.session_state.tournament_id:
         matches_db = get_tournament_matches(st.session_state.tournament_id)
 
-        st.session_state.match_results = [
+        loaded_results = [
             (m[4], m[5]) if m[4] is not None and m[5] is not None else None
             for m in matches_db
         ]
+
+        n_matches = len(st.session_state.schedule)
+
+        # allinea lunghezza
+        loaded_results += [None] * (n_matches - len(loaded_results))
+
+        st.session_state.match_results = loaded_results[:n_matches]
 
 # =========================
 # PAGE: TORNEO
@@ -149,7 +157,13 @@ if page == "🏆 Torneo":
         st.write(f"**Totale partite:** {len(st.session_state.schedule)}")
 
         schedule = st.session_state.schedule
-
+        # sincronizza lunghezza risultati con calendario
+        if len(st.session_state.match_results) < len(schedule):
+            st.session_state.match_results += [None] * (
+                len(schedule) - len(st.session_state.match_results)
+            )
+        elif len(st.session_state.match_results) > len(schedule):
+            st.session_state.match_results = st.session_state.match_results[:len(schedule)]
         col_input, col_standings = st.columns([1, 1])
 
         # Input results in left column
