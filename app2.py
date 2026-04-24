@@ -81,30 +81,24 @@ if "match_results" not in st.session_state:
 saved = load_active_tournament()
 
 if saved:
+    st.session_state.players = saved.get("players", [])
+    st.session_state.schedule = saved.get("schedule", [])
+    st.session_state.step = saved.get("step", 1)
     st.session_state.results = saved.get("results", [])
-else:
-    st.session_state.results = []
-
-if saved:
-    st.session_state.players = saved["players"]
-    st.session_state.schedule = saved["schedule"]
-    st.session_state.step = saved["step"]
     st.session_state.tournament_id = saved.get("tournament_id", None)
 
-    if st.session_state.tournament_id:
-        matches_db = get_tournament_matches(st.session_state.tournament_id)
+    st.session_state.match_results = saved.get(
+        "match_results",
+        [None] * len(st.session_state.schedule)
+    )
 
-        loaded_results = [
-            (m[4], m[5]) if m[4] is not None and m[5] is not None else None
-            for m in matches_db
-        ]
-
-        n_matches = len(st.session_state.schedule)
-
-        # allinea lunghezza
-        loaded_results += [None] * (n_matches - len(loaded_results))
-
-        st.session_state.match_results = loaded_results[:n_matches]
+else:
+    st.session_state.players = []
+    st.session_state.schedule = []
+    st.session_state.results = []
+    st.session_state.match_results = []
+    st.session_state.step = 1
+    st.session_state.tournament_id = None
 
 # =========================
 # PAGE: TORNEO
