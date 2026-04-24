@@ -12,7 +12,8 @@ from database import (
     create_tables, save_tournament, get_players, 
     add_player, get_player_info, delete_player, update_player,
     list_tournaments, get_tournament_stats, get_player_overall_stats, get_player_stats,
-    get_player_ranking_stats, get_tournament_progressive_standings, delete_tournament, cached_all_players_full
+    get_player_ranking_stats, get_tournament_progressive_standings, delete_tournament, cached_all_players_full, 
+    save_active_tournament, load_active_tournament, clear_active_tournament
 )
 
 # ======================
@@ -76,6 +77,16 @@ if "step" not in st.session_state:
 if "match_results" not in st.session_state:
     st.session_state.match_results = []
 
+# Recupera torneo attivo dopo refresh
+saved = load_active_tournament()
+
+if saved and st.session_state.step == 1:
+    st.session_state.players = saved["players"]
+    st.session_state.schedule = saved["schedule"]
+    st.session_state.results = saved["results"]
+    st.session_state.step = saved["step"]
+    st.session_state.match_results = saved["match_results"]
+
 # =========================
 # PAGE: TORNEO
 # =========================
@@ -113,6 +124,13 @@ if page == "🏆 Torneo":
                 st.session_state.schedule, _, _, _ = generate_schedule(selected_players, k)
                 st.session_state.step = 2
                 st.session_state.match_results = [None] * len(st.session_state.schedule)
+                save_active_tournament({
+                    "players": st.session_state.players,
+                    "schedule": st.session_state.schedule,
+                    "results": [],
+                    "step": 2,
+                    "match_results": st.session_state.match_results
+                })
                 st.rerun()
             elif len(selected_players) < int(n_players):
                 st.warning(f"⏳ Seleziona ancora {int(n_players) - len(selected_players)} giocatori")
@@ -208,7 +226,13 @@ if page == "🏆 Torneo":
                 st.info("Inserisci i risultati per vedere la classifica live...")
 
         st.session_state.results = [r for r in st.session_state.match_results if r is not None]
-
+        save_active_tournament({
+            "players": st.session_state.players,
+            "schedule": st.session_state.schedule,
+            "results": st.session_state.results,
+            "step": 2,
+            "match_results": st.session_state.match_results
+        })
         col_btn1, col_btn2 = st.columns(2)
         
         with col_btn1:
@@ -219,6 +243,7 @@ if page == "🏆 Torneo":
                         st.session_state.results
                     )
                     st.session_state.step = 3
+                    clear_active_tournament()
                     st.rerun()
         
         with col_btn2:
@@ -289,6 +314,7 @@ if page == "🏆 Torneo":
 
             with col3:
                 if st.button("🔄 Nuovo torneo", width='stretch'):
+                    clear_active_tournament()
                     st.session_state.clear()
                     st.rerun()
 
