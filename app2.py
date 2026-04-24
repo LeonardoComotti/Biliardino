@@ -274,12 +274,22 @@ if page == "🏆 Torneo":
         with col_btn1:
             if all_valid and len(st.session_state.results) == len(schedule):
                 if st.button("📊 Finalizza classifica", width='stretch'):
-                    st.session_state.standings = compute_standings(
-                        st.session_state.schedule,
-                        st.session_state.results
-                    )
-                    st.session_state.step = 3
-                    st.rerun()
+                st.session_state.standings = compute_standings(
+                    st.session_state.schedule,
+                    st.session_state.results
+                )
+
+                st.session_state.step = 3
+
+                save_active_tournament({
+                    "players": st.session_state.players,
+                    "schedule": st.session_state.schedule,
+                    "results": st.session_state.results,
+                    "step": 3,
+                    "match_results": st.session_state.match_results
+                })
+
+                st.rerun()
         
         with col_btn2:
             if st.button("↩️ Indietro", width='stretch'):
