@@ -497,6 +497,26 @@ def get_all_players_stats():
     conn.close()
     return res
 
+def update_match_score(tournament_id, match_index, score1, score2):
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    UPDATE matches
+    SET score1 = %s,
+        score2 = %s
+    WHERE tournament_id = %s
+    AND id = (
+        SELECT id FROM matches
+        WHERE tournament_id = %s
+        ORDER BY id
+        OFFSET %s LIMIT 1
+    )
+    """, (score1, score2, tournament_id, tournament_id, match_index))
+
+    conn.commit()
+    conn.close()
+    
 @st.cache_data(ttl=300)
 def get_player_ranking_stats(soprannome):
     """Returns count of 1st, 2nd, 3rd place finishes for a player"""
