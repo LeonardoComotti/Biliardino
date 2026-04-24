@@ -13,7 +13,7 @@ from database import (
     add_player, get_player_info, delete_player, update_player,
     list_tournaments, get_tournament_stats, get_player_overall_stats, get_player_stats,
     get_player_ranking_stats, get_tournament_progressive_standings, delete_tournament, cached_all_players_full, 
-    save_active_tournament, load_active_tournament, clear_active_tournament
+    save_active_tournament, load_active_tournament, clear_active_tournament, update_match_score, get_tournament_matches
 )
 
 # ======================
@@ -80,12 +80,29 @@ if "match_results" not in st.session_state:
 # Recupera torneo attivo dopo refresh
 saved = load_active_tournament()
 
-if saved and st.session_state.step == 1:
+if saved:
     st.session_state.players = saved["players"]
     st.session_state.schedule = saved["schedule"]
-    st.session_state.results = saved["results"]
     st.session_state.step = saved["step"]
-    st.session_state.match_results = saved["match_results"]
+
+    # 🔥 LOAD REAL RESULTS FROM DB
+    matches_db = get_tournament_matches(saved["tournament_id"])
+
+saved = load_active_tournament()
+
+if saved:
+    st.session_state.players = saved["players"]
+    st.session_state.schedule = saved["schedule"]
+    st.session_state.step = saved["step"]
+    st.session_state.tournament_id = saved["tournament_id"]
+
+    # SEMPRE dal DB (single source of truth)
+    matches_db = get_tournament_matches(saved["tournament_id"])
+
+    st.session_state.match_results = [
+        (m[4], m[5]) if m[4] is not None and m[5] is not None else None
+        for m in matches_db
+    ]
 
 # =========================
 # PAGE: TORNEO
@@ -125,6 +142,7 @@ if page == "🏆 Torneo":
                 st.session_state.step = 2
                 st.session_state.match_results = [None] * len(st.session_state.schedule)
                 save_active_tournament({
+                    "tournament_id": tid,
                     "players": st.session_state.players,
                     "schedule": st.session_state.schedule,
                     "results": [],
@@ -186,7 +204,17 @@ if page == "🏆 Torneo":
                     all_valid = False
 
                 st.divider()
-
+                if st.button("💾 Salva risultato", key=f"save_{i}"):
+                    if is_valid:
+                        update_match_score(
+                            st.session_state.tournament_id,
+                            i,
+                            s1,
+                            s2
+                        )
+                        st.success("Salvato!")
+                    else:
+                        st.error("Risultato non valido")
         # Display live standings in right column
         with col_standings:
             st.markdown("### 🏆 Classifica Live")
