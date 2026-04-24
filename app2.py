@@ -279,7 +279,6 @@ if page == "🏆 Torneo":
                         st.session_state.results
                     )
                     st.session_state.step = 3
-                    clear_active_tournament()
                     st.rerun()
         
         with col_btn2:
