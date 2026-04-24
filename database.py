@@ -1,4 +1,5 @@
 import copy
+import json
 import psycopg2
 import streamlit as st
 from datetime import datetime
@@ -105,7 +106,12 @@ def create_tables():
         cs INTEGER
     )
     """)
-
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS active_tournament (
+        id INTEGER PRIMARY KEY,
+        data TEXT
+    )
+    """)
     conn.commit()
     conn.close()
 
@@ -422,6 +428,49 @@ def get_tournament_progressive_standings(tournament_id):
         progressive_standings[match_idx + 1] = copy.deepcopy(current_standings)
 
     return progressive_standings
+
+# =========================
+# ACTIVE TOURNAMENT
+# =========================
+
+def save_active_tournament(state):
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM active_tournament")
+
+    cur.execute("""
+    INSERT INTO active_tournament (id, data)
+    VALUES (1, %s)
+    """, (json.dumps(state),))
+
+    conn.commit()
+    conn.close()
+
+
+def load_active_tournament():
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT data FROM active_tournament WHERE id=1")
+    row = cur.fetchone()
+
+    conn.close()
+
+    if row:
+        return json.loads(row[0])
+
+    return None
+
+
+def clear_active_tournament():
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM active_tournament")
+
+    conn.commit()
+    conn.close()
     
 def get_all_players_stats():
     conn = connect_db()
