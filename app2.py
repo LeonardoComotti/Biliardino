@@ -86,7 +86,12 @@ if saved:
     st.session_state.step = saved["step"]
 
     # 🔥 LOAD REAL RESULTS FROM DB
-    matches_db = get_tournament_matches(saved["tournament_id"])
+    tournament_id = saved.get("tournament_id")
+
+    if tournament_id:
+        matches_db = get_tournament_matches(tournament_id)
+    else:
+        matches_db = []
 
 saved = load_active_tournament()
 
