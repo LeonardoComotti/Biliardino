@@ -303,6 +303,12 @@ if page == "🏆 Torneo":
     if st.session_state.step == 3:
         st.subheader("3️⃣ Classifica finale")
 
+        if st.session_state.standings is None:
+            st.session_state.standings = compute_standings(
+                st.session_state.schedule,
+                st.session_state.results
+            )
+
         standings = st.session_state.standings
 
         if standings:
